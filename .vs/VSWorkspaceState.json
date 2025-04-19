@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\public",
+    "\\public\\assets",
+    "\\src",
+    "\\src\\components",
+    "\\src\\data",
+    "\\src\\logo",
+    "\\src\\routes",
+    "\\src\\utils"
+  ],
+  "SelectedNode": "\\src\\components\\ZoomableImage.jsx",
+  "PreviewInSolutionExplorer": false
+}

@@ -1,0 +1,24 @@
+﻿/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable */
+
+/* pulse‑poly, etc. */
+@keyframes pulse-poly {
+    0%,100% {
+        stroke-width: 2px;
+        stroke-opacity: 0.3
+    }
+
+    50% {
+        stroke-width: 6px;
+        stroke-opacity: 1
+    }
+}
+
+.reveal-poly {
+    stroke: lime;
+    stroke-linejoin: round;
+    animation: pulse-poly 0.8s ease-in-out 4;
+}
