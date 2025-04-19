@@ -2,7 +2,7 @@
     {
         "title": "cat",
         "difficulty": "moyen",
-        "image": "/assets/cat.png",
+        "image": "/assets/cat.jpg",
         "polygon": [
             [
                 0.8184,
@@ -125,7 +125,7 @@
     {
         "title": "Corgi",
         "difficulty": "Facile",
-        "image": "/assets/corgi.png",
+        "image": "/assets/corgi.jpg",
         "polygon": [
             [
                 0.4509,
@@ -224,7 +224,7 @@
     {
         "title": "Crocodile",
         "difficulty": "difficile",
-        "image": "/assets/croc.png",
+        "image": "/assets/croc.jpg",
         "polygon": [
             [
                 0.6667,
@@ -423,7 +423,7 @@
     {
         "title": "Merde",
         "difficulty": "difficile",
-        "image": "/assets/cacatheo.png",
+        "image": "/assets/cacatheo.jpg",
         "polygon": [
             [
                 0.3125,
@@ -522,7 +522,7 @@
     {
         "title": "snowleopard",
         "difficulty": "difficile",
-        "image": "/assets/snowleopard.png",
+        "image": "/assets/snowleopard.jpg",
         "polygon": [
             [
                 0.2511,
@@ -621,7 +621,7 @@
     {
         "title": "woman",
         "difficulty": "difficile",
-        "image": "/assets/woman.png",
+        "image": "/assets/woman.jpg",
         "polygon": [
             [
                 0.5256,
@@ -724,7 +724,7 @@
     {
         "title": "plasticduck",
         "difficulty": "difficile",
-        "image": "/assets/plasticduck.png",
+        "image": "/assets/plasticduck.jpg",
         "polygon": [
             [
                 0.2287,
@@ -799,7 +799,7 @@
     {
         "title": "cube",
         "difficulty": "difficile",
-        "image": "/assets/cube.png",
+        "image": "/assets/cube.jpg",
         "polygon": [
             [
                 0.7669,
@@ -878,7 +878,7 @@
     {
         "title": "snakecopperhead",
         "difficulty": "difficile",
-        "image": "/assets/snakesopperhead.png",
+        "image": "/assets/snakesopperhead.jpg",
         "polygon": [
             [
                 0.748,
@@ -1073,7 +1073,7 @@
     {
         "title": "thespy",
         "difficulty": "moyen",
-        "image": "/assets/thespy.png",
+        "image": "/assets/thespy.jpg",
         "polygon": [
             [
                 0.6189,
@@ -1108,7 +1108,7 @@
     {
         "title": "hotsauce",
         "difficulty": "facile",
-        "image": "/assets/hotsauce.png",
+        "image": "/assets/hotsauce.jpg",
         "polygon": [
             [
                 0.15,
