@@ -162,7 +162,7 @@ export default function Game() {
                 </button>
             </aside>
 
-            <div className="col-span-4 h-full relative overflow-hidden">
+            <div className="col-span-4 h-full relative overflow-hidden grid-fix">
                 <ZoomableImage
                     ref={svgRef}
                     src={puzzle.image}

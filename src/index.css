@@ -22,3 +22,11 @@
     stroke-linejoin: round;
     animation: pulse-poly 0.8s ease-in-out 4;
 }
+.grid-fix > * {
+    min-width: 0;
+    min-height: 0;
+}
+
+html, body, #root {
+    height: 100%;
+}
