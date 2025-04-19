@@ -1,66 +1,31 @@
-﻿import React, { forwardRef, useRef, useState, useEffect } from 'react';
+﻿import React, { forwardRef, useRef, useEffect } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export default forwardRef(function ZoomableImage(
-    {
-        src,
-        enablePanZoom = true,
-        setIsPanning = () => { },
-        setImageSize = () => { },
-        onClick,
-        children,
-    },
+    { src, enablePanZoom = true, setIsPanning = () => { }, setImageSize = () => { }, onClick, children },
     svgRef
 ) {
-    const wrapperRef = useRef(null);
-    const containerRef = useRef(null);
+    const imgRef = useRef(null);
 
-    const [natural, setNatural] = useState({ width: 1, height: 1 });
-    const [fitScale, setFitScale] = useState(1);
-
-    /* 1. charge l’image pour connaître sa taille naturelle */
+    // Quand l'image se charge, on récupère sa taille pour le SVG
     useEffect(() => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => {
-            const size = { width: img.naturalWidth, height: img.naturalHeight };
-            setNatural(size);
-            setImageSize(size);
+        const img = imgRef.current;
+        if (!img) return;
+        const handleLoad = () => {
+            setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
         };
-    }, [src]);
-
-    /* 2. calcule (et recalcule) le scale‑to‑fit : **max**, pas min ! */
-    useEffect(() => {
-        if (!containerRef.current) return;
-
-        const compute = () => {
-            const rect = containerRef.current.getBoundingClientRect();
-            const { width: cW, height: cH } = rect;
-            const { width: imgW, height: imgH } = natural;
-
-            // Remplit AU MOINS une dimension du conteneur
-            const scale = Math.max(cW / imgW, cH / imgH) * 0.95;
-            setFitScale(scale || 1);
-            wrapperRef.current?.setTransform(0, 0, scale || 1); // applique immédiatement
-        };
-
-        compute();
-        const ro = new ResizeObserver(compute);
-        ro.observe(containerRef.current);
-        return () => ro.disconnect();
-    }, [natural]);
-
-    /* 3. rendu */
+        img.addEventListener('load', handleLoad);
+        if (img.complete) handleLoad();
+        return () => img.removeEventListener('load', handleLoad);
+    }, [src, setImageSize]);
 
     return (
-        <div ref={containerRef} className="w-full h-full">
+        <div className="w-full h-full">
             <TransformWrapper
-                key={fitScale.toFixed(4)}          /* remount si scale change    */
-                ref={wrapperRef}
-                initialScale={fitScale}
-                minScale={fitScale}
-                maxScale={5}
                 disabled={!enablePanZoom}
+                initialScale={1}
+                minScale={1}
+                maxScale={5}
                 doubleClick={{ disabled: true }}
                 wheel={{ step: 0.2 }}
                 onPanningStart={() => setIsPanning(true)}
@@ -68,23 +33,25 @@ export default forwardRef(function ZoomableImage(
                 wrapperStyle={{ width: '100%', height: '100%' }}
             >
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
-                    <svg
-                        ref={svgRef}
-                        width="100%"
-                        height="100%"
-                        viewBox={`0 0 ${natural.width} ${natural.height}`}
-                        preserveAspectRatio="xMidYMid meet"
-                        onClick={onClick}
-                        style={{ cursor: enablePanZoom ? 'grab' : 'crosshair', display: 'block' }}
-                    >
-                        <image
-                            href={src}
-                            width={natural.width}
-                            height={natural.height}
-                            preserveAspectRatio="xMidYMid meet"
+                    <div className="w-full h-full relative">
+                        <img
+                            ref={imgRef}
+                            src={src}
+                            alt="jeu"
+                            className="w-full h-full object-contain"
+                            draggable="false"
                         />
-                        {children}
-                    </svg>
+                        <svg
+                            ref={svgRef}
+                            onClick={onClick}
+                            className="absolute inset-0 w-full h-full"
+                            viewBox={`0 0 ${imgRef.current?.naturalWidth || 1} ${imgRef.current?.naturalHeight || 1}`}
+                            preserveAspectRatio="xMidYMid meet"
+                            style={{ cursor: onClick ? 'crosshair' : 'default', display: 'block' }}
+                        >
+                            {children}
+                        </svg>
+                    </div>
                 </TransformComponent>
             </TransformWrapper>
         </div>

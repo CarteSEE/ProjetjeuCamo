@@ -10,7 +10,6 @@ export default function Game() {
     const nav = useNavigate();
     const config = JSON.parse(sessionStorage.getItem('config') || '{}');
 
-    // ------------------ state
     const [index, setIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(config.time);
@@ -19,14 +18,12 @@ export default function Game() {
     const [isPanning, setIsPanning] = useState(false);
     const [isFindMode, setIsFindMode] = useState(false);
     const [reveal, setReveal] = useState(false);
-    const [resetZoom, setResetZoom] = useState(0);
-    const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
+    const [naturalSize, setNaturalSize] = useState({ width: 1, height: 1 });
 
     const svgRef = useRef(null);
 
-    // ------------ helpers
     const updateAttempt = (i, status) =>
-        setAttempts((a) => { const c = [...a]; c[i] = status; return c; });
+        setAttempts(a => { const c = [...a]; c[i] = status; return c; });
 
     const flashEffect = (type, cb) => {
         setFlash(type);
@@ -39,22 +36,18 @@ export default function Game() {
     };
 
     const nextImage = () => {
-        setIndex((i) => i + 1);
+        setIndex(i => i + 1);
         setAttempts(Array(config.tries).fill('pending'));
-        setResetZoom((z) => z + 1);
         setIsFindMode(false);
     };
 
-    /* eslint-disable react-hooks/exhaustive-deps */
     const markMiss = useCallback(() => {
         const i = attempts.indexOf('pending');
         if (i < 0) return;
         updateAttempt(i, 'miss');
         flashEffect('miss', revealThenNext);
     }, [attempts]);
-    /* eslint-enable */
 
-    // -------- fin de partie
     useEffect(() => {
         if (index >= config.images) {
             sessionStorage.setItem('score', JSON.stringify(score));
@@ -62,11 +55,10 @@ export default function Game() {
         }
     }, [index, config.images, score, nav]);
 
-    // -------- chrono
     useEffect(() => {
         setTimeLeft(config.time);
         const t = setInterval(() => {
-            setTimeLeft((s) => {
+            setTimeLeft(s => {
                 if (s <= 1) { clearInterval(t); markMiss(); return 0; }
                 return s - 1;
             });
@@ -77,14 +69,13 @@ export default function Game() {
     if (index >= config.images) return null;
     const puzzle = puzzles[index];
 
-    // -------- clic « Trouver »
-    const handleFindClick = (e) => {
-        if (!isFindMode || flash || isPanning || !svgRef.current) return;
+    const handleFindClick = e => {
+        if (!isFindMode) return;
         const pt = svgRef.current.createSVGPoint();
         pt.x = e.clientX; pt.y = e.clientY;
-        const { x, y } = pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
-        const u = x / naturalSize.width;
-        const v = y / naturalSize.height;
+        const loc = pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
+        const u = loc.x / naturalSize.width;
+        const v = loc.y / naturalSize.height;
         const hit = pointInPolygon(u, v, puzzle.polygon);
 
         const i = attempts.indexOf('pending');
@@ -105,47 +96,45 @@ export default function Game() {
         }
     };
 
-    // ------------------ rendu
     return (
         <div className="flex h-screen">
-            {/* SIDEBAR fixe 18rem (≈288 px) */}
             <aside className="w-72 bg-gradient-to-br from-purple-800 to-purple-600 p-6 text-white flex flex-col">
                 <h2 className="text-2xl font-bold mb-2">Objet caché</h2>
-                <p className="italic break-all">{puzzle.title}</p>
+                <p className="italic">{puzzle.title}</p>
                 <p className="mt-2">Difficulté : {puzzle.difficulty}</p>
                 <div className="mt-4"><Scoreboard attempts={attempts} score={score} /></div>
                 <p className="mt-4">Temps restant : <strong>{timeLeft}s</strong></p>
                 <button
                     onClick={() => setIsFindMode(f => !f)}
-                    className={`mt-4 px-4 py-2 rounded transition ${isFindMode ? 'bg-yellow-500 hover:bg-yellow-600'
-                            : 'bg-green-500 hover:bg-green-600'}`}
+                    className={`mt-4 px-4 py-2 rounded ${isFindMode ? 'bg-yellow-500' : 'bg-green-500'
+                        } hover:opacity-90`}
                 >
                     {isFindMode ? '🔍 Recherche' : '✅ Trouver'}
                 </button>
-                <button onClick={() => nav('/')} className="mt-auto bg-white text-purple-800 py-2 rounded hover:bg-gray-100 transition">
+                <button onClick={() => nav('/')} className="mt-auto bg-white text-purple-800 py-2 rounded hover:bg-gray-100">
                     Menu
                 </button>
             </aside>
 
-            {/* ZONE JEU : flex‑1 = prend tout le reste */}
             <div className="flex-1 relative overflow-hidden">
                 <AnimatePresence>
                     {flash && (
                         <motion.div
                             key="flash"
-                            className={`absolute inset-0 z-30 ${flash === 'hit' ? 'bg-green-400' : 'bg-red-400'}`}
+                            className={`absolute inset-0 ${flash === 'hit' ? 'bg-green-400' : 'bg-red-400'
+                                }`}
                             initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }}
                         />
                     )}
                 </AnimatePresence>
 
                 <ZoomableImage
-                    ref={svgRef}
                     src={puzzle.image}
-                    enablePanZoom={!isFindMode}
-                    setIsPanning={setIsPanning}
                     setImageSize={setNaturalSize}
-                    onClick={isFindMode ? handleFindClick : undefined}
+                    enablePanZoom
+                    setIsPanning={setIsPanning}
+                    onClick={handleFindClick}
+                    ref={svgRef}
                 >
                     {reveal && (
                         <polygon
@@ -153,7 +142,6 @@ export default function Game() {
                                 .map(([u, v]) => `${u * naturalSize.width},${v * naturalSize.height}`)
                                 .join(' ')}
                             fill="rgba(0,255,0,0.3)"
-                            className="reveal-poly"
                         />
                     )}
                 </ZoomableImage>
