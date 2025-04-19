@@ -48,7 +48,7 @@
               "RelativeDocumentMoniker": "src\\data\\puzzles.json",
               "ToolTip": "C:\\Users\\thoma\\Documents\\GitHub\\ProjetjeuCamo\\src\\data\\puzzles.json",
               "RelativeToolTip": "src\\data\\puzzles.json",
-              "ViewState": "AgIAAD4EAAAAAAAAAAASwGAEAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAMEAAAAAAAAAAAASwOIAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2025-04-19T19:41:23.634Z",
               "EditorCaption": ""
@@ -111,8 +111,7 @@
               "RelativeToolTip": "src\\routes\\Game.jsx",
               "ViewState": "AgIAAJEAAAAAAAAAAAAswMEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
-              "WhenOpened": "2025-04-19T13:46:03.179Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-19T13:46:03.179Z"
             },
             {
               "$type": "Document",
