@@ -1,84 +1,41 @@
-﻿import React, {
-    forwardRef,
-    useRef,
-    useState,
-    useEffect,
-    useImperativeHandle
-} from 'react';
+﻿import React, { forwardRef, useRef, useEffect } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export default forwardRef(function ZoomableImage(
-    {
-        src,
-        setImageSize = () => { },
-        onDoubleClick = () => { },
-        children
-    },
-    ref
+    { src, enablePanZoom = true, setIsPanning = () => { }, setImageSize = () => { }, onClick, children },
+    svgRef
 ) {
-    const containerRef = useRef(null);
-    const wrapperRef = useRef(null);
-    const svgRef = useRef(null);
+    const imgRef = useRef(null);
 
-    const [naturalSize, setNaturalSize] = useState({ width: 1, height: 1 });
-    const [initialScale, setInitialScale] = useState(1);
-    const [fitScale, setFitScale] = useState(1);
-
-    // Charger les dimensions naturelles de l’image
+    // Quand l'image se charge, on récupère sa taille pour le SVG
     useEffect(() => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => {
-            const size = { width: img.naturalWidth, height: img.naturalHeight };
-            setNaturalSize(size);
-            setImageSize(size);
+        const img = imgRef.current;
+        if (!img) return;
+        const handleLoad = () => {
+            setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
         };
+        img.addEventListener('load', handleLoad);
+        if (img.complete) handleLoad();
+        return () => img.removeEventListener('load', handleLoad);
     }, [src, setImageSize]);
 
-    // Calculer les échelles en fonction du conteneur
-    useEffect(() => {
-        const compute = () => {
-            if (!containerRef.current) return;
-            const { width: cw, height: ch } = containerRef.current.getBoundingClientRect();
-            const { width: iw, height: ih } = naturalSize;
-            const scaleCover = Math.max(cw / iw, ch / ih); // zoom de base (remplir)
-            const scaleContain = Math.min(cw / iw, ch / ih); // zoom fit-to-screen
-            setInitialScale(scaleCover || 1);
-            setFitScale(scaleContain || 1);
-        };
-        compute();
-        const ro = new ResizeObserver(compute);
-        if (containerRef.current) ro.observe(containerRef.current);
-        return () => ro.disconnect();
-    }, [naturalSize]);
-
-    // Exposer les fonctions vers Game.jsx
-    useImperativeHandle(ref, () => ({
-        resetZoom: () => wrapperRef.current?.setTransform(0, 0, initialScale),
-        dezoomToFit: () => wrapperRef.current?.setTransform(0, 0, fitScale),
-        getSvgPoint: (x, y) => {
-            const pt = svgRef.current.createSVGPoint();
-            pt.x = x;
-            pt.y = y;
-            return pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
-        }
-    }), [initialScale, fitScale]);
-
     return (
-        <div ref={containerRef} className="w-full h-full">
+        <div className="w-full h-full">
             <TransformWrapper
-                key={initialScale.toFixed(5)}
-                ref={wrapperRef}
-                initialScale={initialScale}
-                minScale={fitScale}
-                maxScale={initialScale * 5}
+                disabled={!enablePanZoom}
+                initialScale={1}
+                minScale={1}
+                maxScale={5}
                 doubleClick={{ disabled: true }}
                 wheel={{ step: 0.2 }}
+                onPanningStart={() => setIsPanning(true)}
+                onPanningStop={() => setTimeout(() => setIsPanning(false), 100)}
                 wrapperStyle={{ width: '100%', height: '100%' }}
             >
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
                     <div className="w-full h-full relative">
                         <img
+                            ref={imgRef}
                             src={src}
                             alt="jeu"
                             className="w-full h-full object-contain"
@@ -86,11 +43,11 @@ export default forwardRef(function ZoomableImage(
                         />
                         <svg
                             ref={svgRef}
-                            onDoubleClick={onDoubleClick}
+                            onClick={onClick}
                             className="absolute inset-0 w-full h-full"
-                            viewBox={`0 0 ${naturalSize.width} ${naturalSize.height}`}
+                            viewBox={`0 0 ${imgRef.current?.naturalWidth || 1} ${imgRef.current?.naturalHeight || 1}`}
                             preserveAspectRatio="xMidYMid meet"
-                            style={{ cursor: 'crosshair', display: 'block' }}
+                            style={{ cursor: onClick ? 'crosshair' : 'default', display: 'block' }}
                         >
                             {children}
                         </svg>
