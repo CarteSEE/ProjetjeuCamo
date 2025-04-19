@@ -10,7 +10,6 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 export default forwardRef(function ZoomableImage(
     {
         src,
-        enablePanZoom = true,
         setImageSize = () => { },
         onDoubleClick = () => { },
         children
@@ -22,10 +21,10 @@ export default forwardRef(function ZoomableImage(
     const svgRef = useRef(null);
 
     const [naturalSize, setNaturalSize] = useState({ width: 1, height: 1 });
-    const [fillScale, setFillScale] = useState(1);
+    const [initialScale, setInitialScale] = useState(1);
     const [fitScale, setFitScale] = useState(1);
 
-    // 1️⃣ Charge la taille naturelle de l’image
+    // Charger les dimensions naturelles de l’image
     useEffect(() => {
         const img = new Image();
         img.src = src;
@@ -36,27 +35,26 @@ export default forwardRef(function ZoomableImage(
         };
     }, [src, setImageSize]);
 
-    // 2️⃣ Calcule les échelles de zoom (cover et contain) en fonction de la fenêtre
+    // Calculer les échelles en fonction du conteneur
     useEffect(() => {
-        if (!containerRef.current) return;
-
         const compute = () => {
-            if (!containerRef.current) return; // 🔒 sécurité contre null
-            const { width: cW, height: cH } = containerRef.current.getBoundingClientRect();
-            const { width: iW, height: iH } = naturalSize;
-            setFillScale(Math.max(cW / iW, cH / iH) || 1);
-            setFitScale(Math.min(cW / iW, cH / iH) || 1);
+            if (!containerRef.current) return;
+            const { width: cw, height: ch } = containerRef.current.getBoundingClientRect();
+            const { width: iw, height: ih } = naturalSize;
+            const scaleCover = Math.max(cw / iw, ch / ih); // zoom de base (remplir)
+            const scaleContain = Math.min(cw / iw, ch / ih); // zoom fit-to-screen
+            setInitialScale(scaleCover || 1);
+            setFitScale(scaleContain || 1);
         };
-
         compute();
-        const ro = new ResizeObserver(() => compute()); // safe callback
-        ro.observe(containerRef.current);
+        const ro = new ResizeObserver(compute);
+        if (containerRef.current) ro.observe(containerRef.current);
         return () => ro.disconnect();
     }, [naturalSize]);
 
-    // 3️⃣ Expose des méthodes vers le parent
+    // Exposer les fonctions vers Game.jsx
     useImperativeHandle(ref, () => ({
-        resetZoom: () => wrapperRef.current?.setTransform(0, 0, fillScale),
+        resetZoom: () => wrapperRef.current?.setTransform(0, 0, initialScale),
         dezoomToFit: () => wrapperRef.current?.setTransform(0, 0, fitScale),
         getSvgPoint: (x, y) => {
             const pt = svgRef.current.createSVGPoint();
@@ -64,16 +62,16 @@ export default forwardRef(function ZoomableImage(
             pt.y = y;
             return pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
         }
-    }), [fillScale, fitScale]);
+    }), [initialScale, fitScale]);
 
     return (
         <div ref={containerRef} className="w-full h-full">
             <TransformWrapper
+                key={initialScale.toFixed(5)}
                 ref={wrapperRef}
-                disabled={!enablePanZoom}
-                initialScale={fillScale}
+                initialScale={initialScale}
                 minScale={fitScale}
-                maxScale={fillScale * 5}
+                maxScale={initialScale * 5}
                 doubleClick={{ disabled: true }}
                 wheel={{ step: 0.2 }}
                 wrapperStyle={{ width: '100%', height: '100%' }}

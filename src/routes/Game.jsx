@@ -117,7 +117,7 @@ export default function Game() {
             </aside>
 
             {/* zone de jeu */}
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-hidden min-w-0 min-h-0">
                 <AnimatePresence>
                     {flash && (
                         <motion.div
