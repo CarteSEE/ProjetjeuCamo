@@ -14,31 +14,44 @@ export default function Game() {
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(config.time);
     const [flash, setFlash] = useState(null);
-    const [attempts, setAttempts] = useState(Array(config.tries).fill('pending'));
+    const [attempts, setAttempts] = useState(
+        Array(config.tries).fill('pending')
+    );
     const [isPanning, setIsPanning] = useState(false);
-    const [isFindMode, setIsFindMode] = useState(false);
     const [reveal, setReveal] = useState(false);
     const [naturalSize, setNaturalSize] = useState({ width: 1, height: 1 });
+    const [locked, setLocked] = useState(false);
 
     const svgRef = useRef(null);
 
     const updateAttempt = (i, status) =>
-        setAttempts(a => { const c = [...a]; c[i] = status; return c; });
+        setAttempts(a => {
+            const c = [...a];
+            c[i] = status;
+            return c;
+        });
 
-    const flashEffect = (type, cb) => {
+    const flashEffect = (type, cb = () => { }) => {
         setFlash(type);
-        setTimeout(() => { setFlash(null); cb(); }, 300);
+        setLocked(true);
+        setTimeout(() => {
+            setFlash(null);
+            cb();
+            setLocked(false);
+        }, 300);
     };
 
     const revealThenNext = () => {
         setReveal(true);
-        setTimeout(() => { setReveal(false); nextImage(); }, 2000);
+        setTimeout(() => {
+            setReveal(false);
+            nextImage();
+        }, 2000);
     };
 
     const nextImage = () => {
         setIndex(i => i + 1);
         setAttempts(Array(config.tries).fill('pending'));
-        setIsFindMode(false);
     };
 
     const markMiss = useCallback(() => {
@@ -59,7 +72,11 @@ export default function Game() {
         setTimeLeft(config.time);
         const t = setInterval(() => {
             setTimeLeft(s => {
-                if (s <= 1) { clearInterval(t); markMiss(); return 0; }
+                if (s <= 1) {
+                    clearInterval(t);
+                    markMiss();
+                    return 0;
+                }
                 return s - 1;
             });
         }, 1000);
@@ -69,29 +86,44 @@ export default function Game() {
     if (index >= config.images) return null;
     const puzzle = puzzles[index];
 
-    const handleFindClick = e => {
-        if (!isFindMode) return;
+    const handleFind = e => {
+        if (locked || isPanning) return;
+
         const pt = svgRef.current.createSVGPoint();
-        pt.x = e.clientX; pt.y = e.clientY;
-        const loc = pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const loc = pt.matrixTransform(
+            svgRef.current.getScreenCTM().inverse()
+        );
         const u = loc.x / naturalSize.width;
         const v = loc.y / naturalSize.height;
-        const hit = pointInPolygon(u, v, puzzle.polygon);
 
+        const hit = pointInPolygon(u, v, puzzle.polygon);
         const i = attempts.indexOf('pending');
         new Audio(hit ? '/assets/correct.mp3' : '/assets/wrong.mp3').play();
 
         if (hit) {
             updateAttempt(i, 'found');
             flashEffect('hit', () => {
-                const pts = 100 + attempts.filter(a => a === 'pending').length * 10 - index * 5;
+                const pts =
+                    100 +
+                    attempts.filter(a => a === 'pending').length * 10 -
+                    index * 5;
                 setScore(s => s + pts);
                 revealThenNext();
             });
         } else {
             updateAttempt(i, 'miss');
             flashEffect('miss', () => {
-                if (attempts.filter(a => a === 'pending').length === 1) revealThenNext();
+                if (attempts.filter(a => a === 'pending').length === 1) {
+                    // dézoom complet pour montrer l'image globale
+                    svgRef.current?.zoomTo(
+                        naturalSize.width / 2,
+                        naturalSize.height / 2,
+                        1
+                    );
+                    revealThenNext();
+                }
             });
         }
     };
@@ -102,16 +134,16 @@ export default function Game() {
                 <h2 className="text-2xl font-bold mb-2">Objet caché</h2>
                 <p className="italic">{puzzle.title}</p>
                 <p className="mt-2">Difficulté : {puzzle.difficulty}</p>
-                <div className="mt-4"><Scoreboard attempts={attempts} score={score} /></div>
-                <p className="mt-4">Temps restant : <strong>{timeLeft}s</strong></p>
+                <div className="mt-4">
+                    <Scoreboard attempts={attempts} score={score} />
+                </div>
+                <p className="mt-4">
+                    Temps restant : <strong>{timeLeft}s</strong>
+                </p>
                 <button
-                    onClick={() => setIsFindMode(f => !f)}
-                    className={`mt-4 px-4 py-2 rounded ${isFindMode ? 'bg-yellow-500' : 'bg-green-500'
-                        } hover:opacity-90`}
+                    onClick={() => nav('/')}
+                    className="mt-auto bg-white text-purple-800 py-2 rounded hover:bg-gray-100"
                 >
-                    {isFindMode ? '🔍 Recherche' : '✅ Trouver'}
-                </button>
-                <button onClick={() => nav('/')} className="mt-auto bg-white text-purple-800 py-2 rounded hover:bg-gray-100">
                     Menu
                 </button>
             </aside>
@@ -120,28 +152,38 @@ export default function Game() {
                 <AnimatePresence>
                     {flash && (
                         <motion.div
-                            key="flash"
-                            className={`absolute inset-0 ${flash === 'hit' ? 'bg-green-400' : 'bg-red-400'
+                            key={flash}
+                            className={`absolute inset-0 z-50 ${flash === 'hit' ? 'bg-green-400' : 'bg-red-400'
                                 }`}
-                            initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.6 }}
+                            exit={{ opacity: 0 }}
                         />
                     )}
                 </AnimatePresence>
 
                 <ZoomableImage
+                    key={index}
                     src={puzzle.image}
-                    setImageSize={setNaturalSize}
                     enablePanZoom
                     setIsPanning={setIsPanning}
-                    onClick={handleFindClick}
+                    setImageSize={setNaturalSize}
+                    onDoubleClick={handleFind}
                     ref={svgRef}
                 >
                     {reveal && (
-                        <polygon
+                        <motion.polygon
                             points={puzzle.polygon
-                                .map(([u, v]) => `${u * naturalSize.width},${v * naturalSize.height}`)
+                                .map(
+                                    ([u, v]) =>
+                                        `${u * naturalSize.width},${v * naturalSize.height
+                                        }`
+                                )
                                 .join(' ')}
-                            fill="rgba(0,255,0,0.3)"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: [0, 1, 0] }}
+                            transition={{ repeat: Infinity, duration: 0.8 }}
+                            fill="rgba(0,255,0,0.45)"
                         />
                     )}
                 </ZoomableImage>
